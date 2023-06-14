@@ -14,17 +14,16 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 
 @app.route("/ml")
 def ml():
-    model = tf.keras.models.load_model('D:\\BANGKIT\\backend_classify\\ml\\ml.h5')
+    model = tf.keras.models.load_model(env.fullPath + '\\ml\\ml.h5')
     prediction = model.predict([60.0])
     ret = str(prediction)
     return ret
 
 @app.route("/cnn", methods=['POST'])
 def cnn():
-    model = tf.keras.models.load_model('D:\\BANGKIT\\backend_classify\\ml\\cnn.h5')
+    model = tf.keras.models.load_model(env.fullPath + '\\ml\\cnn.h5')
     
-    path = 'D:\\BANGKIT\\backend_classify\\uploads\\apple2.jpg'
-    imgx = plt.imread(path)
+    path = env.fullPath + '\\uploads\\apple2.jpg'
 
     img = tf.keras.utils.load_img(path, target_size=(224, 224))
     x = tf.keras.utils.img_to_array(img)
