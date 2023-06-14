@@ -1,9 +1,10 @@
-from flask import Flask
+from flask import Flask, request
 from flask_cors import CORS, cross_origin
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import env
+import helper
 
 app = Flask(__name__)
 app.config["JSON_SORT_KEYS"] = False
@@ -12,12 +13,31 @@ app.secret_key = "frutify"
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
+
 @app.route("/ml")
 def ml():
     model = tf.keras.models.load_model(env.fullPath + '\\ml\\ml.h5')
     prediction = model.predict([60.0])
     ret = str(prediction)
     return ret
+
+
+@app.route("/upload", methods = ["GET", "POST"])
+def upload():
+    file = request.files["file"]
+    if "file" not in request.files: return helper.composeReply("ERROR", "Gagal memuat file #1")
+    if file.filename == "": return helper.composeReply("ERROR", "Gagal memuat file #2")
+    if not (file and helper.allowed_file(file.filename)): 
+        return helper.composeReply("ERROR", "Gagal memuat file #3")
+    filename = helper.saveFile(file)
+
+    path = env.fullPath + '\\uploads' + '\\' + filename
+
+    
+
+    return helper.composeReply("SUCCESS", "Ok", path)
+    
+
 
 @app.route("/cnn", methods=['POST'])
 def cnn():
