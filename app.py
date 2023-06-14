@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, send_file
 from flask_cors import CORS, cross_origin
 import numpy as np
 import tensorflow as tf
@@ -22,8 +22,8 @@ def ml():
     return ret
 
 
-@app.route("/upload", methods = ["GET", "POST"])
-def upload():
+@app.route("/predict", methods = ["GET", "POST"])
+def predict():
     file = request.files["file"]
     if "file" not in request.files: return helper.composeReply("ERROR", "Gagal memuat file #1")
     if file.filename == "": return helper.composeReply("ERROR", "Gagal memuat file #2")
@@ -31,51 +31,44 @@ def upload():
         return helper.composeReply("ERROR", "Gagal memuat file #3")
     filename = helper.saveFile(file)
 
+    model = tf.keras.models.load_model(env.fullPath + '\\ml\\cnn.h5')
     path = env.fullPath + '\\uploads' + '\\' + filename
 
+    img = tf.keras.utils.load_img(path, color_mode = 'rgb', target_size = (224, 224, 3), interpolation = 'nearest')
+    img = tf.keras.utils.img_to_array(img)
+    img = np.expand_dims(img, axis = 0)
+    img = img/255.0
+
+    images = np.vstack([img])
+    classes = model.predict(images, batch_size = 32)
+    predict = np.argmax(classes)
+    try:
+        if classes[0][0]>0.5:
+            prediction = 'fresh apple'
+        elif classes[0][1]>0.5:
+            prediction = 'fresh banana'
+        elif classes[0][2]>0.5:
+            prediction = 'fresh orange'
+        elif classes[0][3]>0.5:
+            prediction = 'rotten apple'
+        elif classes[0][4]>0.5:
+            prediction = 'rotten banana'
+        elif classes[0][5]>0.5:
+            prediction = 'rotten orange'
+        else:
+            prediction = 'fruit does not match our data'  
+    except:
+        prediction = 'fruit does not match our data'
+
+
+    return helper.composeReply("SUCCESS", "prediction", classes.tolist())
+
+
+@app.route("/uploads")
+def uploads():
+    path = request.args.get("path")
+    return send_file(env.fullPath + "\\uploads\\" + path)
     
-
-    return helper.composeReply("SUCCESS", "Ok", path)
-    
-
-
-@app.route("/cnn", methods=['POST'])
-def cnn():
-    model = tf.keras.models.load_model(env.fullPath + '\\ml\\cnn.h5')
-    
-    path = env.fullPath + '\\uploads\\apple2.jpg'
-
-    img = tf.keras.utils.load_img(path, target_size=(224, 224))
-    x = tf.keras.utils.img_to_array(img)
-    x = np.expand_dims(x, axis=0)
-    x = x/255.0
-
-    images = np.vstack([x])
-    classes = model.predict(images, batch_size=32)
-    print(classes)
-    if classes[0][0]>0.5:
-        prediction = 'apel busuk'
-    elif classes[0][1]>0.5:
-        prediction = 'apel segar'
-    elif classes[0][2]>0.5:
-        prediction = 'jeruk busuk'
-    elif classes[0][3]>0.5:
-        prediction = 'jeruk segar'
-    elif classes[0][4]>0.5:
-        prediction = 'mangga busuk'
-    elif classes[0][5]>0.5:
-        prediction = 'mangga segar'
-    elif classes[0][6]>0.5:
-        prediction = 'pisang busuk'
-    elif classes[0][7]>0.5:
-        prediction = 'pisang segar'
-    elif classes[0][8]>0.5:
-        prediction = 'stroberi busuk'
-    elif classes[0][9]>0.5:
-        prediction = 'stroberi segar'
-
-    ret = str(prediction)
-    return ret
 
 if __name__ == '__main__':
     app.run(host = env.runHost, port = env.runPort, debug = env.runDebug)
