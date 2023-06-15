@@ -24,8 +24,8 @@ def ml():
 
 @app.route("/predict", methods = ["GET", "POST"])
 def predict():
-    file = request.files["file"]
-    if "file" not in request.files: return helper.composeReply("ERROR", "Gagal memuat file #1")
+    file = request.files["image"]
+    if "image" not in request.files: return helper.composeReply("ERROR", "Gagal memuat file #1")
     if file.filename == "": return helper.composeReply("ERROR", "Gagal memuat file #2")
     if not (file and helper.allowed_file(file.filename)): 
         return helper.composeReply("ERROR", "Gagal memuat file #3")
