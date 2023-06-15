@@ -97,7 +97,7 @@ def predict():
         "fruit": fruit,
         "quality" : quality,
         "precentage" : precentage,
-        "classes" : classes.tolist(),
+        "classes" : classes[0].tolist(),
         "price_estimation" : 0
     }
 
