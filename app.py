@@ -2,7 +2,6 @@ from flask import Flask, request, send_file
 from flask_cors import CORS, cross_origin
 import numpy as np
 import tensorflow as tf
-import matplotlib.pyplot as plt
 import env
 import helper
 
@@ -17,6 +16,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 @app.route("/ml")
 def ml():
     model = tf.keras.models.load_model(env.fullPath + '\\ml\\ml.h5')
+    #model = tf.keras.models.load_model(env.fullPath + '/ml/ml.h5')
     prediction = model.predict([60.0])
     ret = str(prediction)
     return ret
@@ -33,6 +33,8 @@ def predict():
 
     model = tf.keras.models.load_model(env.fullPath + '\\ml\\cnn.h5')
     path = env.fullPath + '\\uploads' + '\\' + filename
+    #model = tf.keras.models.load_model(env.fullPath + '/ml/cnn.h5')
+    #path = env.fullPath + '/uploads' + '/' + filename
 
     img = tf.keras.utils.load_img(path, color_mode = 'rgb', target_size = (224, 224, 3), interpolation = 'nearest')
     img = tf.keras.utils.img_to_array(img)
@@ -42,32 +44,71 @@ def predict():
     images = np.vstack([img])
     classes = model.predict(images, batch_size = 32)
     predict = np.argmax(classes)
+    fruit = "tidak terdefinisi"
+    quality = "-"
+    precentage = 0.0
     try:
         if classes[0][0]>0.5:
-            prediction = 'fresh apple'
+            prediction = 'Fresh Apple'
+            fruit = "Apel"
+            quality = "Baik"
+            precentage = classes[0][0].tolist()
+
         elif classes[0][1]>0.5:
-            prediction = 'fresh banana'
+            prediction = 'Fresh Banana'
+            fruit = "Pisang"
+            quality = "Baik"
+            precentage = classes[0][1].tolist()
+
         elif classes[0][2]>0.5:
-            prediction = 'fresh orange'
+            prediction = 'Fresh Orange'
+            fruit = "Jeruk"
+            quality = "Baik"
+            precentage = classes[0][2].tolist()
+
         elif classes[0][3]>0.5:
-            prediction = 'rotten apple'
+            prediction = 'Rotten Apple'
+            fruit = "Apel"
+            quality = "Buruk"
+            precentage = classes[0][3].tolist()
+
         elif classes[0][4]>0.5:
-            prediction = 'rotten banana'
+            prediction = 'Rotten Banana'
+            fruit = "Pisang"
+            quality = "Buruk"
+            precentage = classes[0][4].tolist()
+
         elif classes[0][5]>0.5:
-            prediction = 'rotten orange'
-        else:
-            prediction = 'fruit does not match our data'  
+            prediction = 'Rotten Orange'
+            fruit = "Jeruk"
+            quality = "Buruk"
+            precentage = classes[0][5].tolist()
+
     except:
-        prediction = 'fruit does not match our data'
+        print("-")
 
+    print(predict)
+    print(classes[0])
+    print(list(classes[0]))
+    print(list(classes[0]).sort())
 
-    return helper.composeReply("SUCCESS", "prediction", classes.tolist())
+    data = {
+        "filename": filename,
+        "fruit": fruit,
+        "quality" : quality,
+        "precentage" : precentage,
+        "classes" : classes.tolist(),
+        "price_estimation" : 0
+    }
+
+    return helper.composeReply("SUCCESS", "prediction", data)
 
 
 @app.route("/uploads")
 def uploads():
     path = request.args.get("path")
     return send_file(env.fullPath + "\\uploads\\" + path)
+    #return send_file(env.fullPath + "/uploads/" + path)
     
 
 if __name__ == '__main__':
